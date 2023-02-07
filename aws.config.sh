@@ -1,3 +1,7 @@
+###########
+# Script Config
+###########
+
 adminemail=admin@abc.com
 correspondenceemail=hello@abc.com
 awsregion=us-east-1
@@ -9,6 +13,10 @@ rolename=R_SF_User_Auth_test
 policyname=P_SF_User_Auth_test
 functionname=F_SF_User_Auth_test
 api=API_Auth_test
+
+###########
+# Script Config Ends
+###########
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
