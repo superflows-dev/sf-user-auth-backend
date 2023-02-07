@@ -1,7 +1,7 @@
 adminemail=admin@abc.com
 correspondenceemail=hello@abc.com
 awsregion=us-east-1
-awsaccount=181895849565
+awsaccount=121212121212
 apistage=test
 weborigin=http://localhost:8000
 tablename=T_SF_User_Auth_test
