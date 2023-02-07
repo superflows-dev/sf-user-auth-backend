@@ -1,15 +1,14 @@
-tablename=T_SF_Users_101
-rolename=R_SF_Users_101
-policyname=P_SF_Users_101
-functionname=F_SF_SignUp_101
-api=API_Auth
-weborigin=http://localhost:8000
-adminemail=hrushi.mehendale@gmail.com
-correspondenceemail=hrushi.mehendale@gmail.com
-
+adminemail=admin@abc.com
+correspondenceemail=hello@abc.com
 awsregion=us-east-1
 awsaccount=181895849565
 apistage=test
+weborigin=http://localhost:8000
+tablename=T_SF_User_Auth_test
+rolename=R_SF_User_Auth_test
+policyname=P_SF_User_Auth_test
+functionname=F_SF_User_Auth_test
+api=API_Auth_test
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
