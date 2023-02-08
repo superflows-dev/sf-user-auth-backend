@@ -270,9 +270,9 @@ rm -r aws_proc
 
 cp -r aws aws_proc
 
-find ./aws_proc -name '*.js' -exec sed -i '' -e "s/AWS_REGION/$awsregion/g" {} \;
-find ./aws_proc -name '*.js' -exec sed -i '' -e "s/DB_TABLE_NAME/$tablename/g" {} \;
-find ./aws_proc -name '*.js' -exec sed -i '' -e "s/WEB_ORIGIN/$weborigin/g" {} \;
+find ./aws_proc -name '*.js' -exec sed -i -e "s/AWS_REGION/$awsregion/g" {} \;
+find ./aws_proc -name '*.js' -exec sed -i -e "s/DB_TABLE_NAME/$tablename/g" {} \;
+find ./aws_proc -name '*.js' -exec sed -i -e "s/WEB_ORIGIN/$weborigin/g" {} \;
 
 zip -r -j ./aws_proc/auth.zip aws_proc/auth/*
 
