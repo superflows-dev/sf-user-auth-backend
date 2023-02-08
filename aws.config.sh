@@ -12,7 +12,7 @@ tablename=T_SF_User_Auth_test
 rolename=R_SF_User_Auth_test
 policyname=P_SF_User_Auth_test
 functionname=F_SF_User_Auth_test
-api=API_Auth_test
+api=API_SF_User_Auth_test
 
 ###########
 # Script Config Ends
