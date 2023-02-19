@@ -95,7 +95,7 @@ export const processValidate = async (event) => {
     }
     
     if(foundAccessToken && validAccessToken) {
-      return {statusCode: 200, body: {result: true}};
+      return {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false}};
     }
 
 }
