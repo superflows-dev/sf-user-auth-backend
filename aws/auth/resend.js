@@ -3,6 +3,7 @@ import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP } from './util.js';
 import {OTP_RESEND_DELAY} from './globals.js';
+import { processAddLog } from './addLog.js'
 
 export const processResend = async (event) => {
     
@@ -11,12 +12,16 @@ export const processResend = async (event) => {
     try {
         email = JSON.parse(event.body).email.trim();
     } catch (e) {
-        return {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      const response = {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      processAddLog('norequest', 'resend', event, response, response.statusCode)
+      return response;
     }
     
     
     if(email == null || email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+      const response = {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      processAddLog(email, 'resend', event, response, response.statusCode)
+      return response;
     }
     
     var getParams = {
@@ -41,7 +46,9 @@ export const processResend = async (event) => {
     
     if(resultGet.Item == null) {
     
-      return {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      const response = {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      processAddLog(email, 'resend', event, response, response.statusCode)
+      return response;
 
     }
     
@@ -50,7 +57,9 @@ export const processResend = async (event) => {
     const otpTime = parseInt(parseInt(resultGet.Item.otpTime.S));
     
     if((otpTime + OTP_RESEND_DELAY*1000) > now) {
-      return {statusCode: 401, body: {result: false, error: "The verification email should normally reach your inbox immediately. But in some cases it may take some more time. Please wait for a minute before attempting to resend."}}
+      const response = {statusCode: 401, body: {result: false, error: "The verification email should normally reach your inbox immediately. But in some cases it may take some more time. Please wait for a minute before attempting to resend."}}
+      processAddLog(email, 'resend', event, response, response.statusCode)
+      return response;
     }
     
     
@@ -126,6 +135,8 @@ export const processResend = async (event) => {
     
     await sendEmail();
     
-    return {statusCode: 200, body: {result: true}};
+    const response = {statusCode: 200, body: {result: true}};
+    processAddLog(email, 'resend', event, response, response.statusCode)
+    return response;
 
 }

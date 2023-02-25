@@ -10,6 +10,7 @@ apistage=test
 weborigin=http://localhost:8000
 appname=MyAppName
 tablename=T_SF_User_Auth_test
+logtablename=T_SF_User_Auth_Logs_test
 rolename=R_SF_User_Auth_test
 policyname=P_SF_User_Auth_test
 functionname=F_SF_User_Auth_test
@@ -115,6 +116,40 @@ else
       newtable="$tableexists";
 fi
 
+
+
+
+echo -e "\n>> Table: ${TBOLD}$logtablename${TNORMAL}";
+
+echo -e "\n⏳ Checking if ${TBOLD}$logtablename${TNORMAL} exists"
+
+logtableexistscommand="aws dynamodb describe-table --table-name $logtablename";
+
+logtableexists=`eval "$logtableexistscommand | jq '.Table.TableArn'"`;
+
+if [ -z "$logtableexists" ]
+then
+      echo -e "\n💬 Table ${TBOLD}$logtablename${TNORMAL} does not exist ${YELLOW} ⚠ ${NC}, creating it";
+      echo -e "\n⏳ Creating table ${TBOLD}$logtablename${TNORMAL} exists, moving ahead with it";
+      lognewtable=`aws dynamodb create-table \
+      --table-name $logtablename \
+      --attribute-definitions AttributeName=email,AttributeType=S AttributeName=timestamp,AttributeType=N \
+      --key-schema AttributeName=email,KeyType=HASH AttributeName=timestamp,KeyType=RANGE \
+      --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 | jq '.TableDescription.TableArn'`
+      if [ -z "$lognewtable" ]
+      then
+            echo -e "\n💬 DynamoDb table creation FAILED ${RED} x ${NC}";
+      else
+            echo -e "\n💬 DynamoDb table creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lognewtable";
+      fi
+else
+      echo -e "\n💬 Table ${TBOLD}$logtablename${TNORMAL} exists, moving ahead with it ${GREEN} ✓ ${NC}";
+      lognewtable="$logtableexists";
+fi
+
+
+
+
 echo -e "\n>> Admin email: ${TBOLD}$adminemail${TNORMAL}";
 
 echo -e "\n⏳ Creating admin ${TBOLD}$adminemail${TNORMAL}";
@@ -158,7 +193,7 @@ if [ -z "$getpolicy" ]
 then
       echo -e "\n💬 Policy ${GREEN} ✓ ${NC}: ${TBOLD}$policyname${TNORMAL} does not exist ${RED} x ${NC}";
       echo -e "\n⏳ Creating policy ${TBOLD}$policyname${TNORMAL}";
-      policydocument="{\"Version\": \"2012-10-17\", \"Statement\": [{\"Sid\": \"Stmt1674124196543\",\"Action\": \"dynamodb:*\",\"Effect\": \"Allow\",\"Resource\": ${newtable}}, {\"Sid\": \"VisualEditor0\",\"Effect\": \"Allow\",\"Action\": [\"ses:SendEmail\",\"ses:SendTemplatedEmail\",\"ses:SendRawEmail\"],\"Resource\": \"*\"}]}"
+      policydocument="{\"Version\": \"2012-10-17\", \"Statement\": [{\"Sid\": \"Stmt1674124196543\",\"Action\": \"dynamodb:*\",\"Effect\": \"Allow\",\"Resource\": ${newtable}}, {\"Sid\": \"Stmt1674124196544\",\"Action\": \"dynamodb:*\",\"Effect\": \"Allow\",\"Resource\": ${lognewtable}}, {\"Sid\": \"VisualEditor0\",\"Effect\": \"Allow\",\"Action\": [\"ses:SendEmail\",\"ses:SendTemplatedEmail\",\"ses:SendRawEmail\"],\"Resource\": \"*\"}]}"
       policycommand="aws iam create-policy --policy-name $policyname --policy-document '$policydocument'";
       policy=`eval "$policycommand | jq '.Policy.Arn'"`;
       getpolicy="$policy";
@@ -273,6 +308,7 @@ cp -r aws aws_proc
 
 find ./aws_proc -name '*.js' -exec sed -i -e "s|AWS_REGION|$awsregion|g" {} \;
 find ./aws_proc -name '*.js' -exec sed -i -e "s|DB_TABLE_NAME|$tablename|g" {} \;
+find ./aws_proc -name '*.js' -exec sed -i -e "s|DB_LOG_TABLE_NAME|$logtablename|g" {} \;
 find ./aws_proc -name '*.js' -exec sed -i -e "s|WEB_ORIGIN|$weborigin|g" {} \;
 find ./aws_proc -name '*.js' -exec sed -i -e "s|APP_NAME|$appname|g" {} \;
 
@@ -848,6 +884,270 @@ else
       echo -e "\n💬 Resend options lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionresendoptions";
 fi
 
+
+
+echo -e "\n\nStep 4h: DetailUser"
+echo -e "--------------"
+
+echo -e "\n⏳ Creating detailuser method";
+
+createresourcedetailusercommand="aws apigateway create-resource --rest-api-id $createapi --region $awsregion --parent-id $getresources --path-part detailuser";
+
+createresourcedetailuser=`eval "$createresourcedetailusercommand | jq '.id'"`
+
+if [ -z "$createresourcedetailuser" ]
+then
+      echo -e "\n💬 DetailUser resource creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 DetailUser resource creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createresourcedetailuser";
+fi
+
+putmethoddetailusercommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcedetailuser --http-method POST --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethoddetailuser=`eval "$putmethoddetailusercommand | jq '.httpMethod'"`
+
+if [ -z "$putmethoddetailuser" ]
+then
+      echo -e "\n💬 DetailUser method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 DetailUser method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethoddetailuser";
+fi
+
+putmethoddetailuseroptionscommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcedetailuser --http-method OPTIONS --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethoddetailuseroptions=`eval "$putmethoddetailuseroptionscommand | jq '.httpMethod'"`
+
+if [ -z "$putmethoddetailuseroptions" ]
+then
+      echo -e "\n💬 DetailUser options method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 DetailUser options method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethoddetailuseroptions";
+fi
+
+
+echo -e "\n⏳ Creating lambda integration";
+
+putintegrationdetailusercommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcedetailuser --http-method POST --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationdetailuser=`eval "$putintegrationdetailusercommand | jq '.passthroughBehavior'"`;
+
+putintegrationdetailuseroptionscommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcedetailuser --http-method OPTIONS --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationdetailuseroptions=`eval "$putintegrationdetailuseroptionscommand | jq '.passthroughBehavior'"`;
+
+
+echo -e "\n⏳ Adding lambda invoke permission";
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissiondetailusercommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/POST/detailuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissiondetailuser=`eval "$lambdaaddpermissiondetailusercommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissiondetailuser" ]
+then
+      echo -e "\n💬 DetailUser lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 DetailUser lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissiondetailuser";
+fi
+
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissiondetailuseroptionscommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/OPTIONS/detailuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissiondetailuseroptions=`eval "$lambdaaddpermissiondetailuseroptionscommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissiondetailuseroptions" ]
+then
+      echo -e "\n💬 DetailUser options lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 DetailUser options lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissiondetailuseroptions";
+fi
+
+
+
+echo -e "\n\nStep 4i: LogoutUser"
+echo -e "--------------"
+
+echo -e "\n⏳ Creating logoutuser method";
+
+createresourcelogoutusercommand="aws apigateway create-resource --rest-api-id $createapi --region $awsregion --parent-id $getresources --path-part logoutuser";
+
+createresourcelogoutuser=`eval "$createresourcelogoutusercommand | jq '.id'"`
+
+if [ -z "$createresourcelogoutuser" ]
+then
+      echo -e "\n💬 LogoutUser resource creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 LogoutUser resource creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createresourcelogoutuser";
+fi
+
+putmethodlogoutusercommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcelogoutuser --http-method POST --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodlogoutuser=`eval "$putmethodlogoutusercommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodlogoutuser" ]
+then
+      echo -e "\n💬 LogoutUser method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 LogoutUser method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodlogoutuser";
+fi
+
+putmethodlogoutuseroptionscommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcelogoutuser --http-method OPTIONS --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodlogoutuseroptions=`eval "$putmethodlogoutuseroptionscommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodlogoutuseroptions" ]
+then
+      echo -e "\n💬 LogoutUser options method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 LogoutUser options method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodlogoutuseroptions";
+fi
+
+
+echo -e "\n⏳ Creating lambda integration";
+
+putintegrationlogoutusercommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcelogoutuser --http-method POST --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationlogoutuser=`eval "$putintegrationlogoutusercommand | jq '.passthroughBehavior'"`;
+
+putintegrationlogoutuseroptionscommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcelogoutuser --http-method OPTIONS --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationlogoutuseroptions=`eval "$putintegrationlogoutuseroptionscommand | jq '.passthroughBehavior'"`;
+
+
+echo -e "\n⏳ Adding lambda invoke permission";
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionlogoutusercommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/POST/logoutuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionlogoutuser=`eval "$lambdaaddpermissionlogoutusercommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionlogoutuser" ]
+then
+      echo -e "\n💬 LogoutUser lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 LogoutUser lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionlogoutuser";
+fi
+
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionlogoutuseroptionscommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/OPTIONS/logoutuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionlogoutuseroptions=`eval "$lambdaaddpermissionlogoutuseroptionscommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionlogoutuseroptions" ]
+then
+      echo -e "\n💬 LogoutUser options lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 LogoutUser options lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionlogoutuseroptions";
+fi
+
+
+
+
+echo -e "\n\nStep 4j: ListLogs"
+echo -e "--------------"
+
+echo -e "\n⏳ Creating listlogs method";
+
+createresourcelistlogscommand="aws apigateway create-resource --rest-api-id $createapi --region $awsregion --parent-id $getresources --path-part listlogs";
+
+createresourcelistlogs=`eval "$createresourcelistlogscommand | jq '.id'"`
+
+if [ -z "$createresourcelistlogs" ]
+then
+      echo -e "\n💬 ListLogs resource creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 ListLogs resource creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createresourcelistlogs";
+fi
+
+putmethodlistlogscommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcelistlogs --http-method POST --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodlistlogs=`eval "$putmethodlistlogscommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodlistlogs" ]
+then
+      echo -e "\n💬 ListLogs method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 ListLogs method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodlistlogs";
+fi
+
+putmethodlistlogsoptionscommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourcelistlogs --http-method OPTIONS --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodlistlogsoptions=`eval "$putmethodlistlogsoptionscommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodlistlogsoptions" ]
+then
+      echo -e "\n💬 ListLogs options method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 ListLogs options method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodlistlogsoptions";
+fi
+
+
+echo -e "\n⏳ Creating lambda integration";
+
+putintegrationlistlogscommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcelistlogs --http-method POST --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationlistlogs=`eval "$putintegrationlistlogscommand | jq '.passthroughBehavior'"`;
+
+putintegrationlistlogsoptionscommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourcelistlogs --http-method OPTIONS --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationlistlogsoptions=`eval "$putintegrationlistlogsoptionscommand | jq '.passthroughBehavior'"`;
+
+
+echo -e "\n⏳ Adding lambda invoke permission";
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionlistlogscommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/POST/listlogs\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionlistlogs=`eval "$lambdaaddpermissionlistlogscommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionlistlogs" ]
+then
+      echo -e "\n💬 ListLogs lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 ListLogs lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionlistlogs";
+fi
+
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionlistlogsoptionscommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/OPTIONS/listlogs\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionlistlogsoptions=`eval "$lambdaaddpermissionlistlogsoptionscommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionlistlogsoptions" ]
+then
+      echo -e "\n💬 ListLogs options lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 ListLogs options lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionlistlogsoptions";
+fi
 
 
 

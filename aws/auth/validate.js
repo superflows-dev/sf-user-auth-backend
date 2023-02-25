@@ -3,6 +3,7 @@ import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP, generateToken } from './util.js';
 import { ACCESS_TOKEN_DURATION, REFRESH_TOKEN_DURATION } from './globals.js'
+import { processAddLog } from './addLog.js'
 
 export const processValidate = async (event) => {
     
@@ -32,11 +33,15 @@ export const processValidate = async (event) => {
     const accessToken = hAscii.split(":")[1];
     
     if(email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      //processAddLog('norequest', 'validate', event, response, response.statusCode)
+      return response;
     }
     
     if(accessToken.length < 5) {
-        return {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      //processAddLog(email, 'validate', event, response, response.statusCode)
+      return response;
     }
     
     //
@@ -64,11 +69,11 @@ export const processValidate = async (event) => {
     
     if(resultGet.Item == null) {
     
-        return {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      const response = {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      //processAddLog(email, 'validate', event, response, response.statusCode)
+      return response;
 
     }
-    
-    console.log('ascii', hAscii);
     
     //
     // Check if accessToken exists and valid
@@ -81,7 +86,7 @@ export const processValidate = async (event) => {
     
     for(var i = 0; i < resultGet.Item.accessTokens.L.length; i++) {
       
-      console.log('comparing', resultGet.Item.accessTokens.L[i].M.token.S, accessToken)
+      
       if(resultGet.Item.accessTokens.L[i].M.token.S == accessToken) {
         foundAccessToken = true;
         if(parseInt(resultGet.Item.accessTokens.L[i].M.expiry.S + "") > now) {
@@ -91,11 +96,15 @@ export const processValidate = async (event) => {
     }
     
     if(!foundAccessToken || !validAccessToken) {
-      return {statusCode: 401, body: {result: false, error: "Unauthorized request!"}};
+      const response = {statusCode: 401, body: {result: false, error: "Unauthorized request!"}};
+      //processAddLog(email, 'validate', event, response, response.statusCode)
+      return response;
     }
     
     if(foundAccessToken && validAccessToken) {
-      return {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false}};
+      const response = {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false}};
+      //processAddLog(email, 'validate', event, response, response.statusCode)
+      return response;
     }
 
 }

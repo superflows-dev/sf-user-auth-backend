@@ -2,6 +2,7 @@ import { PutItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
 import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP } from './util.js';
+import { processAddLog } from './addLog.js'
 
 export const processSignUp = async (event) => {
     
@@ -12,16 +13,22 @@ export const processSignUp = async (event) => {
         email = JSON.parse(event.body).email.trim();
         name = JSON.parse(event.body).name.trim();  
     } catch (e) {
-        return {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      const response = {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      processAddLog('norequest', 'signup', event, response, response.statusCode)
+      return response;
     }
     
     
     if(email == null || email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+        const response = {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+        processAddLog('norequest', 'signup', event, response, response.statusCode)
+        return response;
     }
     
     if(name == null || name == "" || name.length < 3 ) {
-        return {statusCode: 400, body: {result: false, error: "Name not valid!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Name not valid!"}}
+      processAddLog(email, 'signup', event, response, response.statusCode)
+      return response;
     }
     
     var getParams = {
@@ -45,7 +52,9 @@ export const processSignUp = async (event) => {
     
     if(resultGet.Item != null) {
     
-        return {statusCode: 409, body: {result: false, error: "Account already exists!"}}
+      const response = {statusCode: 409, body: {result: false, error: "Account already exists!"}}
+      processAddLog(email, 'signup', event, response, response.statusCode)
+      return response;
 
     }
     
@@ -119,6 +128,9 @@ export const processSignUp = async (event) => {
     
     await sendEmail();
     
-    return {statusCode: 200, body: {result: true}};
+    const response = {statusCode: 200, body: {result: true}};
+    processAddLog(email, 'signup', event, response, response.statusCode)
+    return response;
+
 
 }

@@ -2,6 +2,7 @@ import { PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/clie
 import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP } from './util.js';
+import { processAddLog } from './addLog.js'
 
 export const processSignIn = async (event) => {
     
@@ -10,12 +11,16 @@ export const processSignIn = async (event) => {
     try {
         email = JSON.parse(event.body).email.trim();
     } catch (e) {
-        return {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      const response = {statusCode: 400, body: { result: false, error: "Malformed body!"}};
+      processAddLog('norequest', 'signin', event, response, response.statusCode)
+      return response;
     }
     
     
     if(email == null || email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+      processAddLog('norequest', 'signin', event, response, response.statusCode)
+      return response;
     }
     
     var getParams = {
@@ -40,8 +45,22 @@ export const processSignIn = async (event) => {
     
     if(resultGet.Item == null) {
     
-        return {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      const response = {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      processAddLog(email, 'signin', event, response, response.statusCode)
+      return response;
 
+    }
+    
+    if(resultGet.Item.suspended != null) {
+      
+      if(resultGet.Item.suspended['BOOL']) {
+        
+        const response = {statusCode: 401, body: {result: false, error: "Unauthorized request!"}};
+        processAddLog(email, 'signin', event, response, response.statusCode)
+        return response;
+        
+      }
+      
     }
     
     const name = resultGet.Item.name.S;
@@ -85,8 +104,6 @@ export const processSignIn = async (event) => {
         }
     };
     
-    console.log(JSON.stringify(updateParams));
-    
     var resultUpdate = await ddbUpdate();
     
     async function sendEmail() {
@@ -120,8 +137,10 @@ export const processSignIn = async (event) => {
       }
     }
     
-    await sendEmail();
+    const sendResult = await sendEmail();
     
-    return {statusCode: 200, body: {result: true}};
+    const response = {statusCode: 200, body: {result: true}};
+    processAddLog(email, 'signin', event, response, response.statusCode)
+    return response;
 
 }

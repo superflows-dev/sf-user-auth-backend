@@ -4,6 +4,12 @@ import { processVerify } from './verify.js'
 import { processValidate } from './validate.js'
 import { processRefresh } from './refresh.js'
 import { processResend } from './resend.js'
+import { processDetailUser } from './detailuser.js'
+import { processLogoutUser } from './logoutuser.js'
+import { processSuspendUser } from './suspenduser.js'
+import { processResumeUser } from './resumeuser.js'
+import { processUpdateUser } from './updateuser.js'
+import { processListLogs } from './listlogs.js'
 import { origin } from "./ddbClient.js";
 
 export const handler = async (event, context, callback) => {
@@ -55,15 +61,48 @@ export const handler = async (event, context, callback) => {
         const resultRefresh = await processRefresh(event);
         response.body = JSON.stringify(resultRefresh.body);
         response.statusCode = resultRefresh.statusCode;
-        if(resultRefresh.statusCode === 200) {
-          response.headers["Set-Cookie"] = "refreshToken=" + resultRefresh.body.data.refreshToken.token + " expires=" + new Date(parseInt(resultRefresh.body.data.refreshToken.expiry)).toUTCString(); 
-        }
         break;
         
       case "/resend":
         const resultResend = await processResend(event);
         response.body = JSON.stringify(resultResend.body);
         response.statusCode = resultResend.statusCode;
+        break;
+        
+      case "/detailuser":
+        const resultDetailUser = await processDetailUser(event);
+        response.body = JSON.stringify(resultDetailUser.body);
+        response.statusCode = resultDetailUser.statusCode; 
+        break;
+      
+      case "/logoutuser":
+        const resultLogoutUser = await processLogoutUser(event);
+        response.body = JSON.stringify(resultLogoutUser.body);
+        response.statusCode = resultLogoutUser.statusCode; 
+        break;
+        
+      case "/suspenduser":
+        const resultSuspendUser = await processSuspendUser(event);
+        response.body = JSON.stringify(resultSuspendUser.body);
+        response.statusCode = resultSuspendUser.statusCode; 
+        break;
+        
+      case "/resumeuser":
+        const resultResumeUser = await processResumeUser(event);
+        response.body = JSON.stringify(resultResumeUser.body);
+        response.statusCode = resultResumeUser.statusCode; 
+        break;
+        
+      case "/updateuser":
+        const resultUpdateUser = await processUpdateUser(event);
+        response.body = JSON.stringify(resultUpdateUser.body);
+        response.statusCode = resultUpdateUser.statusCode; 
+        break;
+        
+      case "/listlogs":
+        const resultListLogs = await processListLogs(event);
+        response.body = JSON.stringify(resultListLogs.body);
+        response.statusCode = resultListLogs.statusCode; 
         break;
         
       default:

@@ -3,6 +3,7 @@ import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP, generateToken } from './util.js';
 import { ACCESS_TOKEN_DURATION, REFRESH_TOKEN_DURATION } from './globals.js'
+import { processAddLog } from './addLog.js'
 
 export const processRefresh = async (event) => {
     
@@ -31,11 +32,15 @@ export const processRefresh = async (event) => {
     const refreshToken = hAscii.split(":")[1]; 
     
     if(email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      processAddLog('norequest', 'refresh', event, response, response.statusCode)
+      return response;
     }
     
     if(refreshToken.length < 5) {
-        return {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Malformed headers!"}}
+      processAddLog(email, 'refresh', event, response, response.statusCode)
+      return response;
     }
     
     //
@@ -63,11 +68,11 @@ export const processRefresh = async (event) => {
     
     if(resultGet.Item == null) {
     
-        return {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      const response = {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      processAddLog(email, 'refresh', event, response, response.statusCode)
+      return response;
 
     }
-    
-    console.log('ascii', hAscii);
     
     const now = new Date().getTime();
     
@@ -80,7 +85,6 @@ export const processRefresh = async (event) => {
     
     for(var i = 0; i < resultGet.Item.refreshTokens.L.length; i++) {
       
-      console.log('comparing', resultGet.Item.refreshTokens.L[i].M.token.S, refreshToken)
       if(resultGet.Item.refreshTokens.L[i].M.token.S == refreshToken) {
         foundRefreshToken = true;
         if(parseInt(resultGet.Item.refreshTokens.L[i].M.expiry.S + "") > now) {
@@ -94,7 +98,9 @@ export const processRefresh = async (event) => {
     //
     
     if(!foundRefreshToken) {
-      return {statusCode: 401, body: {result: false, error: "Unauthorized request!!"}};
+      const response = {statusCode: 401, body: {result: false, error: "Unauthorized request!!"}};
+      processAddLog(email, 'refresh', event, response, response.statusCode)
+      return response;
     }
     
     //
@@ -102,7 +108,9 @@ export const processRefresh = async (event) => {
     //
     
     if(foundRefreshToken && !validRefreshToken) {
-      return {statusCode: 401, body: {result: false, error: "Unauthorized request!!"}};
+      const response = {statusCode: 401, body: {result: false, error: "Unauthorized request!!"}};
+      processAddLog(email, 'refresh', event, response, response.statusCode)
+      return response;
     }
     
     //
@@ -128,21 +136,16 @@ export const processRefresh = async (event) => {
       }
     });
     
-    console.log('New accessToken', JSON.stringify(newAccessTokenArr))
-    
     // Remove old entries and create a trimmed array
     
     var newAccessTokenTrimmedArr = {};
     newAccessTokenTrimmedArr.L = [];
     
     for(var i = 0; i < newAccessTokenArr.L.length; i++) {
-      console.log('Comparing accessToken', newAccessTokenArr.L[i].M.expiry.S, now)
       if(parseInt(newAccessTokenArr.L[i].M.expiry.S + "") > now) {
           newAccessTokenTrimmedArr.L.push(newAccessTokenArr.L[i]);
       }
     }
-    
-    console.log('Trimmed accessToken', JSON.stringify(newAccessTokenTrimmedArr));
     
     //
     // Prepare refresh token array with rotated token
@@ -179,9 +182,6 @@ export const processRefresh = async (event) => {
     }
     
     
-    console.log('Trimmed refreshToken', JSON.stringify(newRefreshTokenTrimmedArr));
-    
-    
     //
     // Update DB
     //
@@ -209,8 +209,8 @@ export const processRefresh = async (event) => {
       
     var resultUpdate = await ddbUpdate();
     
-    console.log('resultUpdate', resultUpdate);
-    
-    return {statusCode: 200, body: {result: true, data: {accessToken: {token: newAccessToken, expiry: expiryAccessToken}, refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}}}};
+    const response = {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false, data: {name: resultGet.Item.name, email: resultGet.Item.email, accessToken: {token: newAccessToken, expiry: expiryAccessToken}, refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}}}};
+    processAddLog(email, 'refresh', event, response, response.statusCode)
+    return response;
 
 }

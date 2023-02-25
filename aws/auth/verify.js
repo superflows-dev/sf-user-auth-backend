@@ -3,6 +3,7 @@ import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { ddbClient, TABLE_NAME, sesClient, FROM_EMAIL, PROJECT_NAME } from "./ddbClient.js";
 import { generateOTP, generateToken } from './util.js';
 import { ACCESS_TOKEN_DURATION, REFRESH_TOKEN_DURATION } from './globals.js'
+import { processAddLog } from './addLog.js'
 
 export const processVerify = async (event) => {
     
@@ -18,16 +19,22 @@ export const processVerify = async (event) => {
         email = JSON.parse(event.body).email.trim();
         otp = JSON.parse(event.body).otp.trim();  
     } catch (e) {
-        return {statusCode: 400, body: { result: false, error: "Malformed body!"}}; 
+      const response = {statusCode: 400, body: { result: false, error: "Malformed body!"}}; 
+      processAddLog('norequest', 'verify', event, response, response.statusCode)
+      return response;
     }
     
     
     if(email == null || email == "" || !email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
-        return {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+      const response = {statusCode: 400, body: {result: false, error: "Email not valid!"}}
+      processAddLog('norequest', 'verify', event, response, response.statusCode)
+      return response;
     }
     
     if(otp == null || otp == "" || otp.length < 3 ) {
-        return {statusCode: 400, body: {result: false, error: "OTP not valid!"}}
+      const response = {statusCode: 400, body: {result: false, error: "OTP not valid!"}}
+      processAddLog(email, 'verify', event, response, response.statusCode)
+      return response;
     }
     
     
@@ -56,8 +63,22 @@ export const processVerify = async (event) => {
     
     if(resultGet.Item == null) {
     
-        return {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      const response = {statusCode: 404, body: {result: false, error: "Account does not exist!"}}
+      processAddLog(email, 'verify', event, response, response.statusCode)
+      return response;
 
+    }
+    
+    if(resultGet.Item.suspended != null) {
+      
+      if(resultGet.Item.suspended['BOOL']) {
+        
+        const response = {statusCode: 401, body: {result: false, error: "Unauthorized request!"}};
+        processAddLog(email, 'verify', event, response, response.statusCode)
+        return response;
+        
+      }
+      
     }
     
     //
@@ -141,11 +162,15 @@ export const processVerify = async (event) => {
       
       var resultUpdate = await ddbUpdate();
       
-      return {statusCode: 200, body: {result: true, data: {refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}}}};
+      const response = {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false, data: {refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}, name: resultGet.Item.name, email: resultGet.Item.email}}};
+      processAddLog(email, 'verify', event, response, response.statusCode)
+      return response;
 
     } else {
       
-      return {statusCode: 401, body: {result: false, error: "Incorrect OTP!"}}
+      const response = {statusCode: 401, body: {result: false, error: "Incorrect OTP!"}}
+      processAddLog(email, 'verify', event, response, response.statusCode)
+      return response;
       
     }
 
