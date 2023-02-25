@@ -6,8 +6,6 @@ import { processRefresh } from './refresh.js'
 import { processResend } from './resend.js'
 import { processDetailUser } from './detailuser.js'
 import { processLogoutUser } from './logoutuser.js'
-import { processSuspendUser } from './suspenduser.js'
-import { processResumeUser } from './resumeuser.js'
 import { processUpdateUser } from './updateuser.js'
 import { processListLogs } from './listlogs.js'
 import { origin } from "./ddbClient.js";
@@ -79,18 +77,6 @@ export const handler = async (event, context, callback) => {
         const resultLogoutUser = await processLogoutUser(event);
         response.body = JSON.stringify(resultLogoutUser.body);
         response.statusCode = resultLogoutUser.statusCode; 
-        break;
-        
-      case "/suspenduser":
-        const resultSuspendUser = await processSuspendUser(event);
-        response.body = JSON.stringify(resultSuspendUser.body);
-        response.statusCode = resultSuspendUser.statusCode; 
-        break;
-        
-      case "/resumeuser":
-        const resultResumeUser = await processResumeUser(event);
-        response.body = JSON.stringify(resultResumeUser.body);
-        response.statusCode = resultResumeUser.statusCode; 
         break;
         
       case "/updateuser":
