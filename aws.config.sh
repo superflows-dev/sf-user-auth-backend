@@ -2,19 +2,19 @@
 # Script Config
 ###########
 
-adminemail=admin@abc.com
-correspondenceemail=hello@abc.com
-awsregion=us-east-1
-awsaccount=121212121212
-apistage=test
-weborigin=http://localhost:8000
-appname=MyAppName
-tablename=T_SF_User_Auth_test
-logtablename=T_SF_User_Auth_Logs_test
-rolename=R_SF_User_Auth_test
-policyname=P_SF_User_Auth_test
-functionname=F_SF_User_Auth_test
-api=API_SF_User_Auth_test
+adminemail=P_ADMIN_EMAIL
+correspondenceemail=P_CORRESPONDENCE_EMAIL
+awsregion=P_AWS_REGION
+awsaccount=P_AWS_ACCOUNT
+apistage=P_API_STAGE
+weborigin=P_WEB_ORIGIN
+appname=P_APP_NAME
+tablename=P_TABLE_NAME
+logtablename=P_LOG_TABLE_NAME
+rolename=P_ROLE_NAME
+policyname=P_POLICY_NAME
+functionname=P_FUNCTION_NAME
+api=P_API
 
 ###########
 # Script Config Ends
