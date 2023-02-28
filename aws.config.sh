@@ -69,10 +69,10 @@ else
       echo -e "\n💬 SES: Email identity ${TBOLD}$correspondenceemail${TNORMAL} not yet ready for sending ${YELLOW} ⚠ ${NC} emails";
       echo -e "\n$INSTRUCTION"
       echo -e "💬 Verification email has been sent to ${TBOLD}$correspondenceemail${TNORMAL}, verify it" 
-      echo -e "\n$NEXTSTEPS"
-      echo -e "$NEXTSTEPSINSTRUCTION\n" 
-      echo -e $EXITMESSAGE;
-      exit 1;
+      # echo -e "\n$NEXTSTEPS"
+      # echo -e "$NEXTSTEPSINSTRUCTION\n" 
+      # echo -e $EXITMESSAGE;
+      # exit 1;
 
 fi
 
