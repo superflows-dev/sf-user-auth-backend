@@ -1161,7 +1161,7 @@ if [ -z "$createdeployment" ]
 then
     echo -e "\n💬 Auth deployment creation FAILED ${RED} x ${NC}";
 else
-    echo -e "\n💬 Auth deployment creation SUCCESSFUL ${GREEN} ✓ ${NC}:[API] $createdeployment [API]";
+    echo -e "\n💬 Auth deployment creation SUCCESSFUL ${GREEN} ✓ ${NC}:-API-$createdeployment-API-";
 fi
 
 
