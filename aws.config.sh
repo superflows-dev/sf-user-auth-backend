@@ -366,7 +366,7 @@ then
       echo -e "API creation FAILED ${RED} x ${NC}";
       exit 1;
 else
-      echo -e "\n💬 API creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createapi";
+      echo -e "\n💬 API creation SUCCESSFUL ${GREEN} ✓ ${NC}: -API-$createapi-API-";
 fi
 
 echo -e "\n⏳ Getting resource handle";
@@ -1161,7 +1161,7 @@ if [ -z "$createdeployment" ]
 then
     echo -e "\n💬 Auth deployment creation FAILED ${RED} x ${NC}";
 else
-    echo -e "\n💬 Auth deployment creation SUCCESSFUL ${GREEN} ✓ ${NC}:-API-$createdeployment-API-";
+    echo -e "\n💬 Auth deployment creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createdeployment";
 fi
 
 
