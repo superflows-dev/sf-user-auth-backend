@@ -8,8 +8,6 @@ weborigin=P_WEB_ORIGIN
 appname=P_APP_NAME
 tablename=P_TABLE_NAME
 logtablename=P_LOG_TABLE_NAME
-rolename=P_ROLE_NAME
-policyname=P_POLICY_NAME
 functionname=P_FUNCTION_NAME
 
 ###########
