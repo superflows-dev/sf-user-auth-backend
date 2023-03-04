@@ -311,6 +311,7 @@ find ./aws_proc -name '*.js' -exec sed -i -e "s|DB_TABLE_NAME|$tablename|g" {} \
 find ./aws_proc -name '*.js' -exec sed -i -e "s|DB_LOG_TABLE_NAME|$logtablename|g" {} \;
 find ./aws_proc -name '*.js' -exec sed -i -e "s|WEB_ORIGIN|$weborigin|g" {} \;
 find ./aws_proc -name '*.js' -exec sed -i -e "s|APP_NAME|$appname|g" {} \;
+find ./aws_proc -name '*.js' -exec sed -i -e "s|CORRESP_EMAIL|$correspondenceemail|g" {} \;
 
 zip -r -j ./aws_proc/auth.zip aws_proc/auth/*
 
