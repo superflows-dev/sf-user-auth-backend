@@ -15,7 +15,7 @@ export const handler = async (event, context, callback) => {
     const response = {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin" : origin,
+        "Access-Control-Allow-Origin" : '*',
         "Access-Control-Allow-Methods": "*",
         "Access-Control-Allow-Headers": "Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Methods, Access-Control-Allow-Headers, Access-Control-Allow-Credentials, Content-Type, isBase64Encoded, x-requested-with",
         "Access-Control-Allow-Credentials" : true,

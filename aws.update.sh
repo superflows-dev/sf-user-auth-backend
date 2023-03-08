@@ -96,7 +96,7 @@ find ./aws_proc -name '*.js' -exec sed -i -e "s|CORRESP_EMAIL|$correspondenceema
 
 zip -r -j ./aws_proc/auth.zip aws_proc/auth/*
 
-echo -e "\n⏳ Updaing function ${TBOLD}$functionname${TNORMAL} code";
+echo -e "\n⏳ Updating function ${TBOLD}$functionname${TNORMAL} code";
 
 updatefunctioncommand="aws lambda update-function-code --function-name $functionname --zip-file fileb://aws_proc/auth.zip";
 
