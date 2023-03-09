@@ -63,7 +63,13 @@ export const processSignIn = async (event) => {
       
     }
     
-    const name = resultGet.Item.name.S;
+    console.log(resultGet.Item);
+    
+    var name = "";
+    
+    if(resultGet.Item.name != null) {
+     name = resultGet.Item.name.S; 
+    }
     
     const now = new Date().getTime();
     const otp = generateOTP();
@@ -71,6 +77,8 @@ export const processSignIn = async (event) => {
     
     var newOtpArr = resultGet.Item.otp;
     if(newOtpArr == null || newOtpArr.L == null) {
+      newOtpArr = {};
+      console.log('newotparr', newOtpArr)
       newOtpArr.L = [];
     }
     
