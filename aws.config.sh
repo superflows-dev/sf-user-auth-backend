@@ -156,7 +156,7 @@ echo -e "\n⏳ Creating admin ${TBOLD}$adminemail${TNORMAL}";
 
 sleep 10
 
-putitemadmincommand="aws dynamodb put-item --table-name $tablename --item '{ \"email\": {\"S\": \"$adminemail\"}, \"admin\": {\"BOOL\": true} }' --return-consumed-capacity TOTAL --return-item-collection-metrics SIZE"
+putitemadmincommand="aws dynamodb put-item --table-name $tablename --item '{ \"email\": {\"S\": \"$adminemail\"}, \"admin\": {\"BOOL\": true}, \"name\": {\"S\": \"Administrator\"} }' --return-consumed-capacity TOTAL --return-item-collection-metrics SIZE"
 
 putitemadmin=`eval "$putitemadmincommand | jq '.ConsumedCapacity'"`;
 
