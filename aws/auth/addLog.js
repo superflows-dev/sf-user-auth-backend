@@ -56,7 +56,7 @@ export const processAddLog = async (email, op, req, resp, httpCode) => {
     
     await ddbQuery();
     
-    const ddbDelete = async () => {
+    const ddbDelete = async (deleteParams) => {
         try {
             const data = await ddbClient.send(new DeleteItemCommand(deleteParams));
             return data;
@@ -78,7 +78,7 @@ export const processAddLog = async (email, op, req, resp, httpCode) => {
                     timestamp: {N: timestamp + ""}
                 }
             };
-            var resultDelete = await ddbDelete();
+            var resultDelete = await ddbDelete(deleteParams);
             
         }
     }
