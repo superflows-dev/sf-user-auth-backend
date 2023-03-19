@@ -1152,6 +1152,97 @@ fi
 
 
 
+
+
+echo -e "\n\nStep 4k: UpdateUser"
+echo -e "--------------"
+
+echo -e "\n⏳ Creating updateuser method";
+
+createresourceupdateusercommand="aws apigateway create-resource --rest-api-id $createapi --region $awsregion --parent-id $getresources --path-part updateuser";
+
+createresourceupdateuser=`eval "$createresourceupdateusercommand | jq '.id'"`
+
+if [ -z "$createresourceupdateuser" ]
+then
+      echo -e "\n💬 UpdateUser resource creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 UpdateUser resource creation SUCCESSFUL ${GREEN} ✓ ${NC}: $createresourceupdateuser";
+fi
+
+putmethodupdateusercommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourceupdateuser --http-method POST --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodupdateuser=`eval "$putmethodupdateusercommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodupdateuser" ]
+then
+      echo -e "\n💬 UpdateUser method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 UpdateUser method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodupdateuser";
+fi
+
+putmethodupdateuseroptionscommand="aws apigateway put-method --rest-api-id $createapi --resource-id $createresourceupdateuser --http-method OPTIONS --authorization-type \"NONE\" --region $awsregion --no-api-key-required";
+
+putmethodupdateuseroptions=`eval "$putmethodupdateuseroptionscommand | jq '.httpMethod'"`
+
+if [ -z "$putmethodupdateuseroptions" ]
+then
+      echo -e "\n💬 UpdateUser options method creation FAILED ${RED} x ${NC}";
+      exit ;
+else
+      echo -e "\n💬 UpdateUser options method creation SUCCESSFUL ${GREEN} ✓ ${NC}: $putmethodupdateuseroptions";
+fi
+
+
+echo -e "\n⏳ Creating lambda integration";
+
+putintegrationupdateusercommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourceupdateuser --http-method POST --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationupdateuser=`eval "$putintegrationupdateusercommand | jq '.passthroughBehavior'"`;
+
+putintegrationupdateuseroptionscommand="aws apigateway put-integration --region $awsregion --rest-api-id $createapi --resource-id $createresourceupdateuser --http-method OPTIONS --type AWS_PROXY --integration-http-method POST --uri arn:aws:apigateway:$awsregion:lambda:path/2015-03-31/functions/arn:aws:lambda:$awsregion:$awsaccount:function:$functionname/invocations"
+
+putintegrationupdateuseroptions=`eval "$putintegrationupdateuseroptionscommand | jq '.passthroughBehavior'"`;
+
+
+echo -e "\n⏳ Adding lambda invoke permission";
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionupdateusercommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/POST/updateuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionupdateuser=`eval "$lambdaaddpermissionupdateusercommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionupdateuser" ]
+then
+      echo -e "\n💬 UpdateUser lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 UpdateUser lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionupdateuser";
+fi
+
+
+random=`echo $RANDOM`;
+ts=`date +%s`
+
+lambdaaddpermissionupdateuseroptionscommand="aws lambda add-permission --function-name $functionname --source-arn \"arn:aws:execute-api:$awsregion:$awsaccount:$createapi/*/OPTIONS/updateuser\" --principal apigateway.amazonaws.com  --statement-id ${random}${ts} --action lambda:InvokeFunction";
+
+lambdaaddpermissionupdateuseroptions=`eval "$lambdaaddpermissionupdateuseroptionscommand | jq '.Statement'"`;
+
+if [ -z "$lambdaaddpermissionupdateuseroptions" ]
+then
+      echo -e "\n💬 UpdateUser options lambda invoke grant creation FAILED ${RED} x ${NC}";
+      exit 1;
+else
+      echo -e "\n💬 UpdateUser options lambda invoke grant creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lambdaaddpermissionupdateuseroptions";
+fi
+
+
+
+
 echo -e "\n⏳ Deploying API Gateway function";
 
 createdeploymentcommand="aws apigateway create-deployment --rest-api-id $createapi --stage-name $apistage --region $awsregion"
