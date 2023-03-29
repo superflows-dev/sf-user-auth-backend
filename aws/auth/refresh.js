@@ -209,7 +209,7 @@ export const processRefresh = async (event) => {
       
     var resultUpdate = await ddbUpdate();
     
-    const response = {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin : false, data: {name: resultGet.Item.name, email: resultGet.Item.email, accessToken: {token: newAccessToken, expiry: expiryAccessToken}, refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}}}};
+    const response = {statusCode: 200, body: {result: true, admin: resultGet.Item.admin != null ? resultGet.Item.admin["BOOL"] : false, data: {name: resultGet.Item.name, email: resultGet.Item.email, accessToken: {token: newAccessToken, expiry: expiryAccessToken}, refreshToken: {token: newRefreshToken, expiry: expiryRefreshToken}}}};
     processAddLog(email, 'refresh', event, response, response.statusCode)
     return response;
 
