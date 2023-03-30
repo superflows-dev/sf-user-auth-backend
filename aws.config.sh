@@ -104,7 +104,7 @@ then
       --table-name $tablename \
       --attribute-definitions AttributeName=email,AttributeType=S \
       --key-schema AttributeName=email,KeyType=HASH \
-      --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 | jq '.TableDescription.TableArn'`
+      --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 | jq '.TableDescription.TableArn'`
       if [ -z "$newtable" ]
       then
             echo -e "\n💬 DynamoDb table creation FAILED ${RED} x ${NC}";
@@ -137,7 +137,7 @@ then
       --table-name $logtablename \
       --attribute-definitions AttributeName=email,AttributeType=S AttributeName=timestamp,AttributeType=N \
       --key-schema AttributeName=email,KeyType=HASH AttributeName=timestamp,KeyType=RANGE \
-      --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 | jq '.TableDescription.TableArn'`
+      --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 | jq '.TableDescription.TableArn'`
       if [ -z "$lognewtable" ]
       then
             echo -e "\n💬 DynamoDb table creation FAILED ${RED} x ${NC}";
