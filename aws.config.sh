@@ -110,6 +110,8 @@ then
             echo -e "\n💬 DynamoDb table creation FAILED ${RED} x ${NC}";
       else
             echo -e "\n💬 DynamoDb table creation SUCCESSFUL ${GREEN} ✓ ${NC}: $newtable";
+            autoscale=`aws application-autoscaling register-scalable-target --service-namespace dynamodb --resource-id "table/$tablename" --scalable-dimension "dynamodb:table:WriteCapacityUnits" --min-capacity 1 --max-capacity 10`
+            autoscale=`aws application-autoscaling register-scalable-target --service-namespace dynamodb --resource-id "table/$tablename" --scalable-dimension "dynamodb:table:ReadCapacityUnits" --min-capacity 1 --max-capacity 10`
       fi
 else
       echo -e "\n💬 Table ${TBOLD}$tablename${TNORMAL} exists, moving ahead with it ${GREEN} ✓ ${NC}";
@@ -141,6 +143,8 @@ then
             echo -e "\n💬 DynamoDb table creation FAILED ${RED} x ${NC}";
       else
             echo -e "\n💬 DynamoDb table creation SUCCESSFUL ${GREEN} ✓ ${NC}: $lognewtable";
+            autoscale=`aws application-autoscaling register-scalable-target --service-namespace dynamodb --resource-id "table/$logtablename" --scalable-dimension "dynamodb:table:WriteCapacityUnits" --min-capacity 1 --max-capacity 10`
+            autoscale=`aws application-autoscaling register-scalable-target --service-namespace dynamodb --resource-id "table/$logtablename" --scalable-dimension "dynamodb:table:ReadCapacityUnits" --min-capacity 1 --max-capacity 10`
       fi
 else
       echo -e "\n💬 Table ${TBOLD}$logtablename${TNORMAL} exists, moving ahead with it ${GREEN} ✓ ${NC}";
