@@ -66,19 +66,27 @@ export const processAddLog = async (email, op, req, resp, httpCode) => {
         }
     };
     
+    var countDelete = 0;
     for(var i = 0; i < resultItems.length; i++) {
+    // for(var i = 0; i < 1; i++) {
         const email = resultItems[i].email.S;
         const timestamp = resultItems[i].timestamp.N;
         if((parseInt(now) - parseInt(timestamp)) > PRESERVE_LOGS_DAYS*24*60*60*1000) {
                 
             var deleteParams = {
-                TableName: TABLE_NAME,
+                TableName: LOG_TABLE_NAME,
                 Key: {
                     email: { S: email },
                     timestamp: {N: timestamp + ""}
                 }
             };
+            console.log('deleteParams', deleteParams);
             var resultDelete = await ddbDelete(deleteParams);
+            countDelete++;
+            
+            if(countDelete > 5) {
+                break;
+            }
             
         }
     }
